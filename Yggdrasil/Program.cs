@@ -1,9 +1,11 @@
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using Yggdrasil.Instances;
 using Yggdrasil.Redis;
 
 // Connect Redis
 RedisManager.Init("redis:6379");
+InstanceManager.Init();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,11 +19,11 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.RoutePrefix = "swagger";
+});
 
 foreach (var i in NetworkInterface.GetAllNetworkInterfaces())
 {
@@ -31,7 +33,7 @@ foreach (var i in NetworkInterface.GetAllNetworkInterfaces())
         .Select(u => u.Address)
         .Select(u => u.ToString())
         .ToList();
-    Console.WriteLine(i.Name + " " + (addrs.Count == 0 ? "null" : addrs[0]));
+    Console.WriteLine(i.Name + ": " + (addrs.Count == 0 ? "null" : addrs[0]));
 }
 app.UseAuthorization();
 

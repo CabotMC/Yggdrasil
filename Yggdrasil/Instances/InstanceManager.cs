@@ -53,7 +53,7 @@ public class InstanceManager
             ExternalAddress = request.ExternalAddress ?? finalName
         };
         db.HashSet("addresses", instance.ExternalAddress, instance.Name);    
-        db.Set("instance:" + instance.Name, instance);
+        await db.Set("instance:" + instance.Name, instance);
         db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
         var env = (new string[] { "INSTANCE=" + instance.Name })
             .Concat(request.EnviromentVars.Select(k => k.Key + "=" + k.Value))

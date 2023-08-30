@@ -10,6 +10,6 @@ public class InstanceCreateRequest
     public IsolationMode IsolationMode { get; set; } = 0;
     public string? ExternalAddress { get; set; }
     public Dictionary<string, string> EnviromentVars { get; set; } = new();
-    public Dictionary<short, short> OpenPorts = new();
+    public Dictionary<short, short> OpenPorts { get; set; } = new();
 }
 
