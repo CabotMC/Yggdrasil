@@ -1,3 +1,5 @@
+using Yggdrasil.Instances;
+
 namespace Yggdrasil.Model;
 
 public class InstanceCreateRequest

@@ -1,10 +1,10 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using StackExchange.Redis;
-using StackExchange.Redis.Extensions.Extensions;
+using Yggdrasil.Model;
 using Yggdrasil.Redis;
 
-namespace Yggdrasil.Model;
+namespace Yggdrasil.Instances;
 
 public class InstanceManager
 {

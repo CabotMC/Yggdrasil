@@ -1,7 +1,4 @@
 using StackExchange.Redis;
-using StackExchange.Redis.Extensions.Extensions;
-using Yggdrasil.Model;
-
 namespace Yggdrasil.Redis;
 
 public abstract class RedisManager

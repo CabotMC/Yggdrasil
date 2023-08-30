@@ -1,4 +1,4 @@
-namespace Yggdrasil.Model;
+namespace Yggdrasil.Instances;
 
 public class InstanceTemplate
 {
