@@ -29,6 +29,7 @@ public class InstanceManager
 
     public static async Task<Instance> CreateInstance(InstanceCreateRequest request)
     {
+        var db = RedisManager.Connection.GetDatabase();
         string finalName;
         if (request.RequestedName != null && InstanceExists(request.RequestedName))
         {
@@ -40,7 +41,7 @@ public class InstanceManager
         }
         else
         {
-            finalName = Guid.NewGuid().ToString();
+            finalName = Guid.NewGuid().ToString().ToLower();
         }
         var instance = new Instance
         {
@@ -48,21 +49,35 @@ public class InstanceManager
             Image = request.DockerImage,
             Status = InstanceStatus.Provisioning,
             IsolationMode = request.IsolationMode,
-            AttachedVolume = request.AttachedVolume
+            AttachedVolume = request.AttachedVolume,
+            ExternalAddress = request.ExternalAddress ?? finalName
         };
-    
-        RedisManager.Connection.GetDatabase().Set("instance:" + instance.Name, instance);
-        RedisManager.Connection.GetDatabase().Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
+        db.HashSet("addresses", instance.ExternalAddress, instance.Name);    
+        db.Set("instance:" + instance.Name, instance);
+        db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
         var env = (new string[] { "INSTANCE=" + instance.Name })
             .Concat(request.EnviromentVars.Select(k => k.Key + "=" + k.Value))
             .ToList();
+        var bindings = new Dictionary<string, IList<PortBinding>>();
+        foreach (var kv in request.OpenPorts)
+        {
+            bindings.Add(kv.Key + "/tcp", new List<PortBinding>()
+            {
+                new PortBinding()
+                {
+                    HostIP = "0.0.0.0",
+                    HostPort = kv.Value.ToString()
+                }
+            });
+        }
         var containerStartInfo = new CreateContainerParameters()
         {
             Name = instance.Name,
             Image = request.DockerImage,
             HostConfig = new HostConfig()
             {
-                AutoRemove = true
+                AutoRemove = true,
+                PortBindings = bindings
             },
             Env = env
         };
@@ -76,8 +91,8 @@ public class InstanceManager
         );
         await _client.Containers.StartContainerAsync(container.ID, new ContainerStartParameters());
         instance.Status = InstanceStatus.Starting;
-        RedisManager.Connection.GetDatabase().Set("instance:" + instance.Name, instance);
-        RedisManager.Connection.GetDatabase().Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
+        db.Set("instance:" + instance.Name, instance);
+        db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
         return instance;
     }
 

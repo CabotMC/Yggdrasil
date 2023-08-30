@@ -8,6 +8,8 @@ public class Instance
     public IsolationMode IsolationMode { get; set; }
     public string? AttachedVolume { get; set; }
     
+    public string ExternalAddress;
+
 }
 
 public enum InstanceStatus
@@ -18,18 +20,10 @@ public enum InstanceStatus
     Stopping,
     Frozen
 }
+[Flags]
 public enum IsolationMode
 {
-    /**
-     * Instance added to velocity and can be connected to directly or by transferring from another server
-     */
-    None,
-    /**
-     * Players cannot be transferred to or from this image, but universal chat is still available
-     */
-    ChatOnly,
-    /**
-     * This instance is completely isolated from the rest of the network, and can only be connected to directly
-     */
-    All
+    ChatRestricted = 1,
+    TransferRestricted = 2,
+    NoDirectAccess = 4
 }
