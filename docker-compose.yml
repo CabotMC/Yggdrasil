@@ -1,6 +1,8 @@
 ﻿services:
   yggdrasil:
     image: yggdrasil
+    ports:
+      - "8080:80"
     build:
       context: .
       dockerfile: Yggdrasil/Dockerfile
@@ -11,6 +13,6 @@
         source: /var/run/docker.sock
         target: /var/run/docker.sock
   redis:
-    image: redis/redis-stack
+    image: redis
     ports:
       - "6379:6379"
