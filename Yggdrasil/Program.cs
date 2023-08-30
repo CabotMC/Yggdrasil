@@ -1,3 +1,10 @@
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using Yggdrasil.Redis;
+
+// Connect Redis
+RedisManager.Init("redis:6379");
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,6 +23,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+foreach (var i in NetworkInterface.GetAllNetworkInterfaces())
+{
+    
+    var addrs = i.GetIPProperties()
+        .UnicastAddresses
+        .Select(u => u.Address)
+        .Select(u => u.ToString())
+        .ToList();
+    Console.WriteLine(i.Name + " " + (addrs.Count == 0 ? "null" : addrs[0]));
+}
 app.UseAuthorization();
 
 app.MapControllers();

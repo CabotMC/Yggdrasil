@@ -4,7 +4,7 @@ public class Instance
 {
     public string Name { get; set; }
     public string Host { get; set; }
-    public string Image { get; set; }
+    public string Image { get; }
     /**
      * The amount of memory in MB
      */
@@ -19,6 +19,5 @@ public enum InstanceStatus
     Starting,
     Ready,
     Stopping,
-    Frozen,
-    Transferring
+    Frozen
 }
