@@ -4,14 +4,6 @@ public class InstanceTemplate
 {
     public string Name;
     public string DockerImage;
-    public IsolationMode IsolationMode;
-    public string? WorldName;
+    public string[] WorldNames;
 }
 
-public enum IsolationMode
-{
-    None,
-    NoSwapTo,
-    NoSwapFrom,
-    Both
-}

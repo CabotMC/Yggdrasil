@@ -6,6 +6,10 @@
       dockerfile: Yggdrasil/Dockerfile
     depends_on:
       - redis
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
   redis:
     image: redis/redis-stack
     ports:

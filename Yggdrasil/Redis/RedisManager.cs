@@ -1,20 +1,19 @@
 using StackExchange.Redis;
+using StackExchange.Redis.Extensions.Extensions;
+using Yggdrasil.Model;
 
 namespace Yggdrasil.Redis;
 
-public class RedisManager
+public abstract class RedisManager
 {
-    private static ConnectionMultiplexer? connection;
+    public static ConnectionMultiplexer Connection;
 
     public static void Init(string address)
     {
-        connection = ConnectionMultiplexer.Connect(address);
-        connection.ConnectionFailed += (a, b) => Console.WriteLine(a);
-        connection.ConnectionRestored += (_, _) => Console.WriteLine("Redis Connected");
+        Connection = ConnectionMultiplexer.Connect(address);
+        Connection.ConnectionFailed += (a, b) => Console.WriteLine(a);
+        Connection.ConnectionRestored += (_, _) => Console.WriteLine("Redis Connected");
     }
 
-    public void GetInstance(string name)
-    {
-        
-    }
+    
 }

@@ -13,12 +13,13 @@
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.10" />
         <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
+        <PackageReference Include="StackExchange.Redis.Extensions" Version="1.0.1" />
         <PackageReference Include="StackExchange.Redis.Extensions.System.Text.Json" Version="9.1.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controllers\" />
+      <Folder Include="VolumesManager\" />
     </ItemGroup>
 
     <ItemGroup>

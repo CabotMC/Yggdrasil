@@ -1,4 +1,8 @@
 using Docker.DotNet;
+using Docker.DotNet.Models;
+using StackExchange.Redis;
+using StackExchange.Redis.Extensions.Extensions;
+using Yggdrasil.Redis;
 
 namespace Yggdrasil.Model;
 
@@ -11,4 +15,82 @@ public class InstanceManager
         _client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock"))
             .CreateClient();
     }
+    public static Instance GetInstance(string name)
+    {
+        return RedisManager.Connection.GetDatabase()
+            .Get<Instance>("instance:" + name);
+    }
+
+    public static bool InstanceExists(string name)
+    {
+        return RedisManager.Connection.GetDatabase()
+            .KeyExists(name);
+    }
+
+    public static async Task<Instance> CreateInstance(InstanceCreateRequest request)
+    {
+        string finalName;
+        if (request.RequestedName != null && InstanceExists(request.RequestedName))
+        {
+            finalName = request.RequestedName + "-" + Guid.NewGuid().ToString().Split("-")[0];
+        }
+        else if (request.RequestedName != null)
+        {
+            finalName = request.RequestedName;
+        }
+        else
+        {
+            finalName = Guid.NewGuid().ToString();
+        }
+        var instance = new Instance
+        {
+            Name = finalName,
+            Image = request.DockerImage,
+            Status = InstanceStatus.Provisioning,
+            IsolationMode = request.IsolationMode,
+            AttachedVolume = request.AttachedVolume
+        };
+    
+        RedisManager.Connection.GetDatabase().Set("instance:" + instance.Name, instance);
+        RedisManager.Connection.GetDatabase().Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
+        var env = (new string[] { "INSTANCE=" + instance.Name })
+            .Concat(request.EnviromentVars.Select(k => k.Key + "=" + k.Value))
+            .ToList();
+        var containerStartInfo = new CreateContainerParameters()
+        {
+            Name = instance.Name,
+            Image = request.DockerImage,
+            HostConfig = new HostConfig()
+            {
+                AutoRemove = true
+            },
+            Env = env
+        };
+        if (request.AttachedVolume != null)
+        {
+            containerStartInfo.HostConfig
+                .Binds = new List<string> {request.AttachedVolume + ":/data"};
+        }
+        var container = await _client.Containers.CreateContainerAsync(
+            containerStartInfo
+        );
+        await _client.Containers.StartContainerAsync(container.ID, new ContainerStartParameters());
+        instance.Status = InstanceStatus.Starting;
+        RedisManager.Connection.GetDatabase().Set("instance:" + instance.Name, instance);
+        RedisManager.Connection.GetDatabase().Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
+        return instance;
+    }
+
+    public static async Task<List<Instance>> GetAllInstances()
+    {
+        var db = RedisManager.Connection.GetDatabase();
+        var scanResult = await db.ExecuteAsync("SCAN", 0, "MATCH", "instance:*");
+        if (scanResult.IsNull)
+        {
+            Console.WriteLine("No instances running");
+            return new List<Instance>();
+        }
+        return (from key in (RedisResult[])scanResult select db.Get<Instance>(key.ToString())).ToList();
+    }
+    
 }
