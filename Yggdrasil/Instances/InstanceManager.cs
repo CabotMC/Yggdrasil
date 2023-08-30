@@ -43,6 +43,7 @@ public class InstanceManager
         {
             finalName = Guid.NewGuid().ToString().ToLower();
         }
+
         var instance = new Instance
         {
             Name = finalName,
@@ -52,7 +53,7 @@ public class InstanceManager
             AttachedVolume = request.AttachedVolume,
             ExternalAddress = request.ExternalAddress ?? finalName
         };
-        db.HashSet("addresses", instance.ExternalAddress, instance.Name);    
+        db.HashSet("addresses", instance.ExternalAddress, instance.Name);
         await db.Set("instance:" + instance.Name, instance);
         db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
         var env = (new string[] { "INSTANCE=" + instance.Name })
@@ -70,6 +71,7 @@ public class InstanceManager
                 }
             });
         }
+
         var containerStartInfo = new CreateContainerParameters()
         {
             Name = instance.Name,
@@ -79,19 +81,31 @@ public class InstanceManager
                 AutoRemove = true,
                 PortBindings = bindings
             },
-            Env = env
+            Env = env,
+            Labels = new Dictionary<string, string>
+            {
+                { "yggdrasil.instance", instance.Name },
+                { "yggdrasil.externalAddress", instance.ExternalAddress },
+                { "yggdrasil", "managed" }
+            }
         };
         if (request.AttachedVolume != null)
         {
             containerStartInfo.HostConfig
-                .Binds = new List<string> {request.AttachedVolume + ":/data"};
+                .Binds = new List<string> { request.AttachedVolume + ":/data" };
         }
+
         var container = await _client.Containers.CreateContainerAsync(
             containerStartInfo
         );
         await _client.Containers.StartContainerAsync(container.ID, new ContainerStartParameters());
-        instance.Status = InstanceStatus.Starting;
-        db.Set("instance:" + instance.Name, instance);
+        await _client.Networks.ConnectNetworkAsync("mcnet", new NetworkConnectParameters()
+        {
+            Container = container.ID
+        });
+
+    instance.Status = InstanceStatus.Starting;
+        await db.Set("instance:" + instance.Name, instance);
         db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
         return instance;
     }
