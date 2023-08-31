@@ -6,7 +6,7 @@ using Yggdrasil.Redis;
 
 namespace Yggdrasil.Instances;
 
-public class InstanceManager
+public abstract class InstanceManager
 {
     private static DockerClient _client;
 
