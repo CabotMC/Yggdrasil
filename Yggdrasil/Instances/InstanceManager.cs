@@ -98,13 +98,14 @@ public abstract class InstanceManager
         var container = await _client.Containers.CreateContainerAsync(
             containerStartInfo
         );
+        
         await _client.Containers.StartContainerAsync(container.ID, new ContainerStartParameters());
         await _client.Networks.ConnectNetworkAsync("mcnet", new NetworkConnectParameters()
         {
             Container = container.ID
         });
 
-    instance.Status = InstanceStatus.Starting;
+        instance.Status = InstanceStatus.Starting;
         await db.Set("instance:" + instance.Name, instance);
         db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
         return instance;
@@ -113,13 +114,41 @@ public abstract class InstanceManager
     public static async Task<List<Instance>> GetAllInstances()
     {
         var db = RedisManager.Connection.GetDatabase();
-        var scanResult = await db.ExecuteAsync("SCAN", 0, "MATCH", "instance:*");
-        if (scanResult.IsNull)
+        var runningContainers = await _client.Containers.ListContainersAsync(new ContainersListParameters()
         {
-            Console.WriteLine("No instances running");
+            // only list containers with the yggdrasil label
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                {
+                    "label", new Dictionary<string, bool>
+                    {
+                        { "yggdrasil", true }
+                    }
+                }
+            }
+        });
+        if (runningContainers == null)
+        {
             return new List<Instance>();
         }
-        return (from key in (RedisResult[])scanResult select db.Get<Instance>(key.ToString())).ToList();
+        var scanResult = runningContainers.Select(c => c.Names[0].Substring(1));
+        return (from key in scanResult select db.Get<Instance>("instance:" + key)).ToList();
     }
-    
+
+    public static async Task<IList<ImagesListResponse>> GetAvailableImages()
+    {
+        var images = await _client.Images.ListImagesAsync(new ImagesListParameters()
+        {
+            Filters = new Dictionary<string, IDictionary<string, bool>>()
+            {
+                {
+                    "label", new Dictionary<string, bool>()
+                    {
+                        { "minecraftVersion", true }
+                    }
+                }
+            }
+        });
+        return images ?? new List<ImagesListResponse>();
+    }
 }
