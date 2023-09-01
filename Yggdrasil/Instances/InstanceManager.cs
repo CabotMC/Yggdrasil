@@ -56,7 +56,7 @@ public abstract class InstanceManager
         db.HashSet("addresses", instance.ExternalAddress, instance.Name);
         await db.Set("instance:" + instance.Name, instance);
         db.Publish("instanceStatusChanged", instance.Name + ":" + instance.Status);
-        var env = (new string[] { "INSTANCE=" + instance.Name })
+        var env = new [] { "INSTANCE=" + instance.Name }
             .Concat(request.EnviromentVars.Select(k => k.Key + "=" + k.Value))
             .ToList();
         var bindings = new Dictionary<string, IList<PortBinding>>();
@@ -64,7 +64,7 @@ public abstract class InstanceManager
         {
             bindings.Add(kv.Key + "/tcp", new List<PortBinding>()
             {
-                new PortBinding()
+                new()
                 {
                     HostIP = "0.0.0.0",
                     HostPort = kv.Value.ToString()
@@ -76,7 +76,7 @@ public abstract class InstanceManager
         {
             Name = instance.Name,
             Image = request.DockerImage,
-            HostConfig = new HostConfig()
+            HostConfig = new HostConfig
             {
                 AutoRemove = true,
                 PortBindings = bindings
