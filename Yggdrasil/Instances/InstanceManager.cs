@@ -1,6 +1,5 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using StackExchange.Redis;
 using Yggdrasil.Model;
 using Yggdrasil.Redis;
 
@@ -131,7 +130,7 @@ public abstract class InstanceManager
         {
             return new List<Instance>();
         }
-        var scanResult = runningContainers.Select(c => c.Names[0].Substring(1));
+        var scanResult = runningContainers.Select(c => c.Names[0][1..]);
         return (from key in scanResult select db.Get<Instance>("instance:" + key)).ToList();
     }
 
