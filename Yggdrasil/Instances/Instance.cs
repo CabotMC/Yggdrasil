@@ -14,11 +14,11 @@ public class Instance
 
 public enum InstanceStatus
 {
-    Provisioning,
-    Starting,
-    Ready,
-    Stopping,
-    Frozen
+    Provisioning = 0,
+    Starting = 1,
+    Ready = 2,
+    Stopping = 3,
+    Frozen = 4
 }
 [Flags]
 public enum IsolationMode
